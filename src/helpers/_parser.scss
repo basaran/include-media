@@ -12,7 +12,7 @@
 /// @return {String} - Any of `>=`, `>`, `<=`, `<`, `≥`, `≤`
 ///
 @function get-expression-operator($expression) {
-  @each $operator in ('>=', '>', '<=', '<', '≥', '≤') {
+  @each $operator in ('>=', '>', '<=', '<', '≥', '≤', ':') {
     @if string.index($expression, $operator) {
       @return $operator;
     }

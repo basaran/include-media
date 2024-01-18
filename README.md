@@ -1,3 +1,13 @@
+This is a convenience fork with experimental support for CSS container queries.
+
+```scss
+// container without name
+@include container('>=350px', '<tablet', 'retina3x') { }
+
+// container with name
+@include container(':named-container', '>=350px', '<=500px') { }
+```
+
 <a href="https://eduardoboucas.github.io/include-media/">!['At' sign](https://eduardoboucas.github.io/include-media/assets/images/logo.png)</a>
 
 # include-media [![Build Status](https://travis-ci.org/eduardoboucas/include-media.svg?branch=master)](https://travis-ci.org/eduardoboucas/include-media)

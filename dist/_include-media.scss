@@ -6,7 +6,7 @@
 //    |_|_| |_|\___|_|\__,_|\__,_|\___| |_| |_| |_|\___|\__,_|_|\__,_|
 //
 //      Simple, elegant and maintainable media queries in Sass
-//                        v2.0.0
+//                        v@version@
 //
 //        https://eduardoboucas.github.io/include-media
 //
@@ -265,7 +265,7 @@ $im-no-media-expressions: ('screen', 'portrait', 'landscape') !default;
 /// @return {String} - Any of `>=`, `>`, `<=`, `<`, `≥`, `≤`
 ///
 @function get-expression-operator($expression) {
-  @each $operator in ('>=', '>', '<=', '<', '≥', '≤') {
+  @each $operator in ('>=', '>', '<=', '<', '≥', '≤', ':') {
     @if string.index($expression, $operator) {
       @return $operator;
     }
@@ -494,12 +494,6 @@ $im-no-media-expressions: ('screen', 'portrait', 'landscape') !default;
   @return $value * map.get($units, $unit);
 }
 
-////
-/// String to number converter
-/// @author Jack McNicol
-/// @access private
-////
-
 ///
 /// Trims a string of leading and trailing spaces
 ///
@@ -602,16 +596,92 @@ $im-no-media-expressions: ('screen', 'portrait', 'landscape') !default;
 ///  @include media('>=350px', '<tablet', 'retina3x') { }
 ///
 @mixin media($conditions...) {
-  @if ($im-media-support and list.length($conditions) == 0) or
-    (not $im-media-support and im-intercepts-static-breakpoint($conditions...))
-  {
+  @if ($im-media-support and list.length($conditions)==0) or (not $im-media-support and im-intercepts-static-breakpoint($conditions...)) {
     @content;
-  } @else if ($im-media-support and list.length($conditions) > 0) {
+  }
+
+  @else if ($im-media-support and list.length($conditions) > 0) {
     @media #{string.unquote(parse-expression(list.nth($conditions, 1)))} {
       // Recursive call
       $sliced-conditions: slice($conditions, 2);
+
       @include media($sliced-conditions...) {
         @content;
+      }
+    }
+  }
+}
+
+/// @example scss - Mixing everything
+///  @include media('container-block' '>=350px', '<tablet', 'retina3x') { }
+
+@mixin container($conditions...) {
+  @if ($im-media-support and list.length($conditions)==0) or (not $im-media-support and im-intercepts-static-breakpoint($conditions...)) {
+    @content;
+  }
+
+  @else if ($im-media-support and list.length($conditions) > 0) {
+    @container #{string.unquote(list.nth($conditions, 1))} #{string.unquote(parse-expression(list.nth($conditions, 2)))} {
+      // Recursive call
+      $sliced-conditions: slice($conditions, 3);
+
+      @if (list.length($sliced-conditions) > 0) {
+        @include container(list.nth($conditions, 1), $sliced-conditions...) {
+          @content;
+        }
+      }
+    }
+  }
+}
+
+
+/// @example scss - Mixing everything
+/// @include container('>=350px', '<tablet', 'retina3x') { }
+/// 
+/// or the first argument can be the named container
+/// @include container(':named-container', '>=350px', '<tablet', 'retina3x') { }
+///  
+@mixin container($conditions...) {
+  @if ($im-media-support and list.length($conditions)==0) {
+    @content;
+  }
+
+  @else if (not $im-media-support and im-intercepts-static-breakpoint($conditions...)) {
+    @content;
+  }
+
+  @else if ($im-media-support and list.length($conditions) > 0) {
+    $first-condition: list.nth($conditions, 1);
+    $first-character: string.slice($first-condition, 1, 1);
+    $container-name: "" !default;
+
+    @if ($first-character ==':') {
+      $container-name : str-slice($first-condition, 2, -1);
+    }
+
+    @if ($container-name =="") {
+      @container #{string.unquote(parse-expression($first-condition))} {
+        $actual_conditions: slice($conditions, 2);
+
+        @include container($actual_conditions...) {
+          @content;
+        }
+      }
+    }
+
+    @else {
+      @container #{string.unquote($container-name)} #{string.unquote(parse-expression(list.nth($conditions, 2)))} {
+        $actual_conditions: slice($conditions, 3);
+
+        @if (list.length($actual_conditions) > 0) {
+          @include container($first-condition, $actual_conditions...) {
+            @content;
+          }
+        }
+
+        @else {
+          @content;
+        }
       }
     }
   }
